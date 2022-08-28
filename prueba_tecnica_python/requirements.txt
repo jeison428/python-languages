@@ -1,0 +1,5 @@
+python-decouple
+djangorestframework
+django-cors-headers
+pandas
+typing-extensions
