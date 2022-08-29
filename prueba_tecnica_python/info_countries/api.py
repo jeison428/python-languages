@@ -1,5 +1,3 @@
-from multiprocessing import context
-from re import I
 import requests, time, json
 
 import pandas as pd
@@ -36,11 +34,15 @@ class InfoCountries(APIView):
     PATH: 'api/infoCountryLanguage/'
     """
     def get(self, request, *args, **kwargs):
+        start = time.process_time()
         URL = 'https://restcountries.com/v3.1/all'
         data = requests.get(URL) 
         data = data.json()
         df = pd.DataFrame(columns=['region','name','language','time'])
         n = 1
+        end = time.process_time()
+        stimedTime = (end - start)/1000
+        print(f"Tiempo tardado en el consumo del servicio {URL}: {stimedTime}")
         for element in data: 
             start = time.process_time()
             if (element.get('languages') != None):
@@ -48,7 +50,7 @@ class InfoCountries(APIView):
                     country = {'region':element['region'], 'name':element['name']['common'], 'language':value}
                     end = time.process_time()
                     stimedTime = (end - start)/1000
-                    country['time'] = str(stimedTime)+' ms'
+                    country['time'] = stimedTime
                     df1 = pd.DataFrame(country, index={n})
                     df = pd.concat([df, df1], ignore_index=True)
                     n += 1
@@ -56,7 +58,7 @@ class InfoCountries(APIView):
                 country = {'region':element['region'], 'name':element['name']['common'], 'language':''}
                 end = time.process_time()
                 stimedTime = (end - start)/1000
-                country['time'] = str(stimedTime)+' ms'
+                country['time'] = stimedTime
                 df1 = pd.DataFrame(country, index={n})
                 df = pd.concat([df, df1], ignore_index=True)
                 n += 1
@@ -71,6 +73,11 @@ class InfoCountries(APIView):
                     saveLanguage = LanguageCountrySerializer(data=language, context=language)
                     if saveLanguage.is_valid():
                         saveLanguage.save()
+        totalTime = df.time.sum()
+        max = df.time.max()
+        min = df.time.min()
+        promedio = df.time.mean()
+        print(f"Tiempo total: {totalTime} - Tiempo maximo: {max} \nTiempo minimo: {min} - Tiempo promedio: {promedio}")
         newJson = df.to_json()
         
         with open('data.json', 'w') as fp:
